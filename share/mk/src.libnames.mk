@@ -87,6 +87,9 @@ _INTERNALLIBS=	\
 		wpautils \
 		wpawps
 
+_AHACKEDLIBS=	crypt \
+		ncursesw
+
 # Let projects based on FreeBSD append to _INTERNALLIBS
 # by maintaining their own LOCAL_INTERNALLIBS list.
 _INTERNALLIBS+=	${LOCAL_INTERNALLIBS}
@@ -94,6 +97,7 @@ _INTERNALLIBS+=	${LOCAL_INTERNALLIBS}
 _LIBRARIES=	\
 		${_PRIVATELIBS} \
 		${_INTERNALLIBS} \
+		${_AHACKEDLIBS} \
 		${LOCAL_LIBRARIES} \
 		80211 \
 		9p \
@@ -173,7 +177,6 @@ _LIBRARIES=	\
 		memstat \
 		mp \
 		mt \
-		ncursesw \
 		netgraph \
 		netmap \
 		ngatm \
@@ -481,6 +484,10 @@ LDADD_gtest_main= -lprivategtest_main
 LIB${_l:tu}?=	${LIBDESTDIR}${LIBDIR_BASE}/libprivate${_l}.a
 .endfor
 
+.for _l in ${_AHACKEDLIBS}
+LIB${_l:tu}?=	${LIBDESTDIR}${LIBDIR_BASE}/lib${_l}_real.a
+.endfor
+
 .if ${MK_PIE} != "no"
 PIE_SUFFIX=	_pie
 .endif
@@ -494,6 +501,8 @@ DPADD_${_l}?=	${LIB${_l:tu}}
 LDADD_${_l}?=	-lprivate${_l}
 .elif ${_INTERNALLIBS:M${_l}}
 LDADD_${_l}?=	${LDADD_${_l}_L} -l${_l:S/${PIE_SUFFIX}//}${PIE_SUFFIX}
+.elif ${_AHACKEDLIBS:M${_l}} && (defined(NO_SHARED) && ${NO_SHARED:tl} != "no")
+LDADD_${_l}?=	${LDADD_${_l}_L} -l${_l}_real
 .else
 LDADD_${_l}?=	${LDADD_${_l}_L} -l${_l}
 .endif
